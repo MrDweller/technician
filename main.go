@@ -54,10 +54,15 @@ func main() {
 		log.Panic(err)
 	}
 
+	systemPort, err := strconv.Atoi(os.Getenv("PORT"))
+	if err != nil {
+		log.Panic(err)
+	}
+
 	system := models.SystemDefinition{
-		Address:            "eventhandler-test-system",
-		Port:               8080,
-		SystemName:         "eventhandler-test-system",
+		Address:            os.Getenv("ADDRESS"),
+		Port:               systemPort,
+		SystemName:         os.Getenv("SYSTEM_NAME"),
 		AuthenticationInfo: "",
 	}
 
@@ -93,19 +98,18 @@ func main() {
 	}
 
 	orchestrationResponse, err := orchestratorConnection.Orchestration(
-		orchestratormodels.ServiceDefinition{
-			ServiceDefinition: "",
-		},
+		"",
 		orchestratormodels.SystemDefinition{
 			Address:    system.Address,
 			Port:       system.Port,
 			SystemName: system.SystemName,
 		},
-		map[string]bool{
-			"overrideStore":    true,
-			"enableInterCloud": false,
+		orchestratormodels.AdditionalParametersArrowhead_4_6_1{
+			OrchestrationFlags: map[string]bool{
+				"overrideStore":    true,
+				"enableInterCloud": false,
+			},
 		},
-		orchestratormodels.RequesterCloud{},
 	)
 	if err != nil {
 		serviceRegistryConnection.UnRegisterSystem(system)
