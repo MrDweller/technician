@@ -1,4 +1,4 @@
-module github.com/MrDweller/arrowhead-eventhandler-latency-test
+module github.com/MrDweller/technician
 
 go 1.22.0
 
@@ -16,7 +16,7 @@ require (
 )
 
 require (
-	github.com/MrDweller/orchestrator-connection v1.0.6 // indirect
+	github.com/MrDweller/orchestrator-connection v1.0.12 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect

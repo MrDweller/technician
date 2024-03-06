@@ -10,6 +10,8 @@ import (
 	models "github.com/MrDweller/service-registry-connection/models"
 	serviceregistry "github.com/MrDweller/service-registry-connection/service-registry"
 	"github.com/joho/godotenv"
+
+	event "github.com/MrDweller/technician/event"
 )
 
 type EventData struct {
@@ -66,20 +68,34 @@ func main() {
 		AuthenticationInfo: "",
 	}
 
-	response, err := serviceRegistryConnection.RegisterSystem(system)
+	// response, err := serviceRegistryConnection.RegisterSystem(system)
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
+	// log.Printf("Registered system: %s\n", string(response[:]))
+
+	serviceQueryResult, err := serviceRegistryConnection.Query(models.ServiceDefinition{
+		ServiceDefinition: "orchestration-service",
+	})
+	if len(serviceQueryResult.ServiceQueryData) < 1 {
+		serviceRegistryConnection.UnRegisterSystem(system)
+		log.Panicf("Found no orchestrator\n")
+	}
+
+	var orchestratorAddress string
+	var orchestratorPort int
+	for _, queryResult := range serviceQueryResult.ServiceQueryData {
+		if queryResult.Provider.SystemName == "orchestrator" {
+			orchestratorAddress = queryResult.Provider.Address
+			orchestratorPort = queryResult.Provider.Port
+			break
+		}
+	}
+
 	if err != nil {
 		serviceRegistryConnection.UnRegisterSystem(system)
 		log.Panic(err)
 	}
-	log.Printf("Registered system: %s\n", string(response[:]))
-
-	orchestratorAddress := os.Getenv("ORCHESTRATOR_ADDRESS")
-	orchestratorPort, err := strconv.Atoi(os.Getenv("ORCHESTRATOR_PORT"))
-	if err != nil {
-		serviceRegistryConnection.UnRegisterSystem(system)
-		log.Panic(err)
-	}
-
 	orchestratorConnection, err := orchestrator.NewConnection(
 		orchestrator.Orchestrator{
 			Address: orchestratorAddress,
@@ -98,7 +114,10 @@ func main() {
 	}
 
 	orchestrationResponse, err := orchestratorConnection.Orchestration(
-		"",
+		"STUCK",
+		[]string{
+			"AMQP-INSECURE-JSON",
+		},
 		orchestratormodels.SystemDefinition{
 			Address:    system.Address,
 			Port:       system.Port,
@@ -106,8 +125,7 @@ func main() {
 		},
 		orchestratormodels.AdditionalParametersArrowhead_4_6_1{
 			OrchestrationFlags: map[string]bool{
-				"overrideStore":    true,
-				"enableInterCloud": false,
+				"overrideStore": true,
 			},
 		},
 	)
@@ -118,9 +136,9 @@ func main() {
 	log.Printf("Orchestration: %v\n", orchestrationResponse.Response)
 
 	if len(orchestrationResponse.Response) <= 0 {
-		log.Panicf("Found no providers\n")
+		log.Printf("Found no providers\n")
 	}
 	provider := orchestrationResponse.Response[0]
 
-	Receive(provider.Provider.Address, provider.Provider.Port)
+	event.Receive(provider.Provider.Address, provider.Provider.Port)
 }
