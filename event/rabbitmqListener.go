@@ -2,20 +2,34 @@ package event
 
 import (
 	"fmt"
-	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func Receive(address string, port int) {
+type RabbitmqListener struct {
+	done chan bool
+}
+
+func NewRabbitmqListener() *RabbitmqListener {
+	done := make(chan bool)
+	return &RabbitmqListener{
+		done: done,
+	}
+}
+
+func (listener *RabbitmqListener) Listen(address string, port int, event Event, output chan<- []byte) error {
 	url := fmt.Sprintf("%s:%d/", address, port)
 	dialAddrr := fmt.Sprintf("amqp://guest:guest@%s", url)
 	conn, err := amqp.Dial(dialAddrr)
-	FailOnError(err, "Failed to connect to RabbitMQ")
+	if err != nil {
+		return err
+	}
 	defer conn.Close()
 
 	ch, err := conn.Channel()
-	FailOnError(err, "Failed to open a channel")
+	if err != nil {
+		return err
+	}
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
@@ -27,7 +41,9 @@ func Receive(address string, port int) {
 		false,    // no-wait
 		nil,      // arguments
 	)
-	FailOnError(err, "Failed to declare an exchange")
+	if err != nil {
+		return err
+	}
 
 	q, err := ch.QueueDeclare(
 		"",    // name
@@ -37,7 +53,9 @@ func Receive(address string, port int) {
 		false, // no-wait
 		nil,   // arguments
 	)
-	FailOnError(err, "Failed to declare a queue")
+	if err != nil {
+		return err
+	}
 
 	err = ch.QueueBind(
 		q.Name, // queue name
@@ -46,7 +64,9 @@ func Receive(address string, port int) {
 		false,  // no-wait
 		nil,    // arguments
 	)
-	FailOnError(err, "Failed to bind a queue")
+	if err != nil {
+		return err
+	}
 
 	msgs, err := ch.Consume(
 		q.Name, // queue
@@ -57,17 +77,27 @@ func Receive(address string, port int) {
 		false,  // no-wait
 		nil,    // args
 	)
-	FailOnError(err, "Failed to register a consumer")
-
-	var forever chan struct{}
+	if err != nil {
+		return err
+	}
 
 	go func() {
 		for d := range msgs {
-			log.Printf(" [x] %s", d.Body)
+			// log.Println("TESTY1")
+
+			fmt.Printf(" [x] received %s, from %s event.\n", d.Body, event.Name)
+			// output <- d.Body
 		}
 	}()
 
-	log.Printf(" [*] Waiting for logs. To exit press CTRL+C")
-	<-forever
+	fmt.Printf(" [*] Subscribed to %s events, listening for updates..\n", event.Name)
 
+	<-listener.done
+	return nil
+
+}
+
+func (listener *RabbitmqListener) Stop() error {
+	listener.done <- true
+	return nil
 }
