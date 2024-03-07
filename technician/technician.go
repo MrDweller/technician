@@ -138,6 +138,7 @@ func (technician *Technician) Subscribe(requestedService string) error {
 			event.Event{
 				Name: requestedService,
 			},
+			provider.Metadata,
 			technician.eventChannel,
 		)
 

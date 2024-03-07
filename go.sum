@@ -16,6 +16,8 @@ github.com/MrDweller/orchestrator-connection v1.0.11 h1:6X0I9PvPcCSK28YN+K62HcjD
 github.com/MrDweller/orchestrator-connection v1.0.11/go.mod h1:gIzXE2JKyxtGe5ftzEN07B7XnsZCuSbzsH7OO6agiRA=
 github.com/MrDweller/orchestrator-connection v1.0.12 h1:ZR7phBxvhh+nlEFR07fr6K/TXO0Ia5Z6thvXUnzC5aM=
 github.com/MrDweller/orchestrator-connection v1.0.12/go.mod h1:gIzXE2JKyxtGe5ftzEN07B7XnsZCuSbzsH7OO6agiRA=
+github.com/MrDweller/orchestrator-connection v1.0.13 h1:iAlf274SCMNJpPAS3hUTQvZ38bYZ1+M/kT+PEjldDKM=
+github.com/MrDweller/orchestrator-connection v1.0.13/go.mod h1:gIzXE2JKyxtGe5ftzEN07B7XnsZCuSbzsH7OO6agiRA=
 github.com/MrDweller/service-registry-connection v1.0.4 h1:kmJql9R/o2RKFq7SNHolKwHqvj/taln4W1Kl5npMhpw=
 github.com/MrDweller/service-registry-connection v1.0.4/go.mod h1:werFDrDntle8VBpcVjyWQ+IzAJBGwv7vqpxWgf8/z1Q=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=

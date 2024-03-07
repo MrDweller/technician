@@ -6,6 +6,8 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+const EXCHANGE = "exchange"
+
 type RabbitmqListener struct {
 	done chan bool
 }
@@ -17,7 +19,7 @@ func NewRabbitmqListener() *RabbitmqListener {
 	}
 }
 
-func (listener *RabbitmqListener) Listen(address string, port int, event Event, output chan<- []byte) error {
+func (listener *RabbitmqListener) Listen(address string, port int, event Event, metadata map[string]string, output chan<- []byte) error {
 	url := fmt.Sprintf("%s:%d/", address, port)
 	dialAddrr := fmt.Sprintf("amqp://guest:guest@%s", url)
 	conn, err := amqp.Dial(dialAddrr)
@@ -33,13 +35,13 @@ func (listener *RabbitmqListener) Listen(address string, port int, event Event, 
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"logs",   // name
-		"fanout", // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		metadata[EXCHANGE], // name
+		"fanout",           // type
+		true,               // durable
+		false,              // auto-deleted
+		false,              // internal
+		false,              // no-wait
+		nil,                // arguments
 	)
 	if err != nil {
 		return err
@@ -58,11 +60,11 @@ func (listener *RabbitmqListener) Listen(address string, port int, event Event, 
 	}
 
 	err = ch.QueueBind(
-		q.Name, // queue name
-		"",     // routing key
-		"logs", // exchange
-		false,  // no-wait
-		nil,    // arguments
+		q.Name,             // queue name
+		"",                 // routing key
+		metadata[EXCHANGE], // exchange
+		false,              // no-wait
+		nil,                // arguments
 	)
 	if err != nil {
 		return err
