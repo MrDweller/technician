@@ -22,12 +22,12 @@ type TemperatureResponse struct {
 	Temperature float64 `json:"temperature"`
 }
 
-func StartCli(technician *technician.Technician) {
+func StartCli(technician *technician.Technician, output io.Writer) {
 
-	var output io.Writer = os.Stdout
 	var input *os.File = os.Stdin
 
-	fmt.Fprintln(output, "Starting sensor retrieval system cli...")
+	fmt.Fprintln(output, "Starting technician system cli...")
+	fmt.Fprintln(output, "Enter command, for details enter `help`")
 
 	cli := Cli{
 		technician: technician,
@@ -36,7 +36,7 @@ func StartCli(technician *technician.Technician) {
 
 	for {
 		if !cli.running {
-			fmt.Fprintln(output, "Stopping the sensor retrieval system!")
+			fmt.Fprintln(output, "Stopping the technician system!")
 
 			err := technician.StopTechnician()
 			if err != nil {
@@ -45,7 +45,7 @@ func StartCli(technician *technician.Technician) {
 			break
 		}
 
-		fmt.Fprint(output, "enter command: ")
+		// fmt.Fprint(output, "enter command: ")
 
 		reader := bufio.NewReader(input)
 		input, _ := reader.ReadString('\n')
@@ -110,7 +110,7 @@ func (cli *Cli) handleCommand(output io.Writer, commands []string) {
 
 var helpText = `
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	[ SENSOR RETRIEVAL APPLICATION SYSTEM COMMAND LINE INTERFACE ]
+	[ TECHNICIAN APPLICATION SYSTEM COMMAND LINE INTERFACE ]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 COMMANDS:
@@ -122,7 +122,7 @@ VERSION:
 COMMANDS:
 	subscribe <event>			Subscribe to a specifed event
 	unsubscribe <event>			Unsubscribe from a specifed event
-	help						Output this help prompt
-	clear						Clear the terminal
-	exit						Stop the sensor retrieval system
+	help					Output this help prompt
+	clear					Clear the terminal
+	exit					Stop the technician system
 `

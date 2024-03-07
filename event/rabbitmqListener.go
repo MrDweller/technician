@@ -83,14 +83,9 @@ func (listener *RabbitmqListener) Listen(address string, port int, event Event, 
 
 	go func() {
 		for d := range msgs {
-			// log.Println("TESTY1")
-
-			fmt.Printf(" [x] received %s, from %s event.\n", d.Body, event.Name)
-			// output <- d.Body
+			output <- d.Body
 		}
 	}()
-
-	fmt.Printf(" [*] Subscribed to %s events, listening for updates..\n", event.Name)
 
 	<-listener.done
 	return nil

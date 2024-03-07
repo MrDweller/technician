@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -22,9 +24,10 @@ type Technician struct {
 	OrchestrationConnection   orchestrator.OrchestratorConnection
 	*event.Subscriber
 	eventChannel chan []byte
+	output       io.Writer
 }
 
-func NewTechnician(address string, port int, systemName string, serviceRegistryAddress string, serviceRegistryPort int) (*Technician, error) {
+func NewTechnician(address string, port int, systemName string, serviceRegistryAddress string, serviceRegistryPort int, output io.Writer) (*Technician, error) {
 	systemDefinition := models.SystemDefinition{
 		Address:    address,
 		Port:       port,
@@ -69,6 +72,8 @@ func NewTechnician(address string, port int, systemName string, serviceRegistryA
 		ServiceRegistryConnection: serviceRegistryConnection,
 		OrchestrationConnection:   orchestrationConnection,
 		Subscriber:                event.NewSubscriber(),
+		eventChannel:              make(chan []byte),
+		output:                    output,
 	}, nil
 }
 
@@ -78,18 +83,25 @@ func (technician *Technician) StartTechnician() error {
 		return err
 	}
 
-	// for event := range technician.eventChannel {
-	// 	fmt.Printf(" [x] received %s.\n", event)
-	// }
+	for event := range technician.eventChannel {
+		fmt.Fprintf(technician.output, "\n\t[x] Received %s.\n", event)
+	}
+
 	return nil
 }
 
 func (technician *Technician) StopTechnician() error {
-	err := technician.ServiceRegistryConnection.UnRegisterSystem(technician.SystemDefinition)
+	err := technician.Subscriber.UnsubscribeAll()
 	if err != nil {
 		return err
 	}
-	return nil
+
+	err = technician.ServiceRegistryConnection.UnRegisterSystem(technician.SystemDefinition)
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 func (technician *Technician) Subscribe(requestedService string) error {
@@ -118,26 +130,37 @@ func (technician *Technician) Subscribe(requestedService string) error {
 	}
 	provider := orchestrationResponse.Response[0]
 
-	err = technician.Subscriber.Subscribe(
-		provider.Provider.Address,
-		provider.Provider.Port,
-		event.Event{
-			Name: requestedService,
-		},
-		technician.eventChannel,
-	)
-	if err != nil {
-		return err
-	}
+	fmt.Fprintf(technician.output, "\n\t[*] Subscribing to %s events.\n", requestedService)
+	go func() {
+		err := technician.Subscriber.Subscribe(
+			provider.Provider.Address,
+			provider.Provider.Port,
+			event.Event{
+				Name: requestedService,
+			},
+			technician.eventChannel,
+		)
+
+		if err != nil {
+			fmt.Fprintf(technician.output, "\n\t[*] Error during subscription: %s\n", err)
+			return
+		}
+
+	}()
 
 	return nil
 
 }
 
 func (technician *Technician) Unsubscribe(requestedService string) error {
-	return technician.Subscriber.Unsubscribe(event.Event{
+	err := technician.Subscriber.Unsubscribe(event.Event{
 		Name: requestedService,
 	})
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(technician.output, "\n\t[*] Unsubscribing from %s events.\n", requestedService)
+	return nil
 }
 
 func (technician *Technician) getClient() (*http.Client, error) {

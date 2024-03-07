@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -45,12 +46,18 @@ func main() {
 		log.Panic(err)
 	}
 
-	technician, err := technician.NewTechnician(address, port, systemName, serviceRegistryAddress, serviceRegistryPort)
+	var output io.Writer = os.Stdout
+	technician, err := technician.NewTechnician(address, port, systemName, serviceRegistryAddress, serviceRegistryPort, output)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	technician.StartTechnician()
+	go func() {
+		err := technician.StartTechnician()
+		if err != nil {
+			log.Panic(err)
+		}
+	}()
 
-	cli.StartCli(technician)
+	cli.StartCli(technician, output)
 }

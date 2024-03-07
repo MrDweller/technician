@@ -18,7 +18,7 @@ func NewSubscriber() *Subscriber {
 func (subscriber *Subscriber) Subscribe(address string, port int, event Event, output chan<- []byte) error {
 	_, exists := subscriber.listeners[event]
 	if exists {
-		return fmt.Errorf("alredy subscribed to %s event", event.Name)
+		return fmt.Errorf("already subscribed to %s event", event.Name)
 	}
 	subscriber.listeners[event] = NewRabbitmqListener()
 	return subscriber.listeners[event].Listen(address, port, event, output)
@@ -31,4 +31,17 @@ func (subscriber *Subscriber) Unsubscribe(event Event) error {
 	}
 	delete(subscriber.listeners, event)
 	return listener.Stop()
+}
+
+func (subscriber Subscriber) UnsubscribeAll() error {
+	var err error
+	err = nil
+	for event := range subscriber.listeners {
+		subErr := subscriber.Unsubscribe(event)
+		if subErr != nil {
+			err = subErr
+		}
+	}
+
+	return err
 }
