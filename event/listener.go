@@ -1,6 +1,7 @@
 package event
 
 type Listener interface {
-	Listen(address string, port int, event Event, metadata map[string]string, output chan<- []byte) error
+	Listen(output chan<- []byte) error
+	GetListenerId() string
 	Stop() error
 }

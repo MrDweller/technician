@@ -128,35 +128,37 @@ func (technician *Technician) Subscribe(requestedService string) error {
 	if len(orchestrationResponse.Response) <= 0 {
 		return errors.New("found no providers")
 	}
-	provider := orchestrationResponse.Response[0]
+	providers := orchestrationResponse.Response
 
 	fmt.Fprintf(technician.output, "\n\t[*] Subscribing to %s events.\n", requestedService)
-	go func() {
-		err := technician.Subscriber.Subscribe(
-			provider.Provider.Address,
-			provider.Provider.Port,
-			event.Event{
-				Name: requestedService,
-			},
-			provider.Metadata,
-			technician.eventChannel,
-		)
 
-		if err != nil {
-			fmt.Fprintf(technician.output, "\n\t[*] Error during subscription: %s\n", err)
-			return
-		}
+	for _, provider := range providers {
+		go func() {
+			err := technician.Subscriber.Subscribe(
+				provider.Provider.Address,
+				provider.Provider.Port,
+				event.Event{
+					Name: requestedService,
+				},
+				provider.Metadata,
+				technician.eventChannel,
+			)
 
-	}()
+			if err != nil {
+				fmt.Fprintf(technician.output, "\n\t[*] Error during subscription: %s\n", err)
+				return
+			}
+
+		}()
+
+	}
 
 	return nil
 
 }
 
 func (technician *Technician) Unsubscribe(requestedService string) error {
-	err := technician.Subscriber.Unsubscribe(event.Event{
-		Name: requestedService,
-	})
+	err := technician.Subscriber.Unsubscribe(requestedService)
 	if err != nil {
 		return err
 	}
