@@ -130,11 +130,11 @@ func (technician *Technician) Subscribe(requestedService string) error {
 	}
 	providers := orchestrationResponse.Response
 
-	fmt.Fprintf(technician.output, "\n\t[*] Subscribing to %s events.\n", requestedService)
-
 	for _, provider := range providers {
+		fmt.Fprintf(technician.output, "\n\t[*] Subscribing to %s events on %s at %s:%d.\n", requestedService, provider.Provider.SystemName, provider.Provider.Address, provider.Provider.Port)
 		go func() {
 			err := technician.Subscriber.Subscribe(
+				provider.Provider.SystemName,
 				provider.Provider.Address,
 				provider.Provider.Port,
 				event.Event{
@@ -158,7 +158,11 @@ func (technician *Technician) Subscribe(requestedService string) error {
 }
 
 func (technician *Technician) Unsubscribe(requestedService string) error {
-	err := technician.Subscriber.Unsubscribe(requestedService)
+	err := technician.Subscriber.UnsubscribeAllByEvent(
+		event.Event{
+			Name: requestedService,
+		},
+	)
 	if err != nil {
 		return err
 	}

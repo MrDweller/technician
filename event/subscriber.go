@@ -5,40 +5,77 @@ import (
 )
 
 type Subscriber struct {
-	listeners map[string]Listener
+	subscription map[SubscriptionKey]Subscription
 }
 
 func NewSubscriber() *Subscriber {
-	listeners := map[string]Listener{}
+	subscription := map[SubscriptionKey]Subscription{}
 	return &Subscriber{
-		listeners: listeners,
+		subscription: subscription,
 	}
 }
 
-func (subscriber *Subscriber) Subscribe(address string, port int, event Event, metadata map[string]string, output chan<- []byte) error {
+func (subscriber *Subscriber) Subscribe(systemName string, address string, port int, event Event, metadata map[string]string, output chan<- []byte) error {
 	listener := NewRabbitmqListener(address, port, event, metadata)
-	_, exists := subscriber.listeners[listener.GetListenerId()]
+	subscription := Subscription{
+		SystemName: systemName,
+		Address:    address,
+		Port:       port,
+		Event:      event,
+		Listener:   listener,
+	}
+	_, exists := subscriber.subscription[subscription.SubscriptionKey()]
 	if exists {
 		return fmt.Errorf("already subscribed to %s event", event.Name)
 	}
-	subscriber.listeners[listener.GetListenerId()] = listener
-	return subscriber.listeners[listener.GetListenerId()].Listen(output)
+	subscriber.subscription[subscription.SubscriptionKey()] = subscription
+	return subscriber.subscription[subscription.SubscriptionKey()].Listen(output)
 }
 
-func (subscriber *Subscriber) Unsubscribe(key string) error {
-	listener, exists := subscriber.listeners[key]
+func (subscriber *Subscriber) Unsubscribe(systemName string, address string, port int, event Event) error {
+	subscription := Subscription{
+		SystemName: systemName,
+		Address:    address,
+		Port:       port,
+		Event:      event,
+	}
+	err := subscriber.unsubscribe(subscription.SubscriptionKey())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (subscriber *Subscriber) unsubscribe(key SubscriptionKey) error {
+	listener, exists := subscriber.subscription[key]
 	if !exists {
 		return fmt.Errorf("not subscribed to %s event", listener.GetListenerId())
 	}
-	delete(subscriber.listeners, key)
+	delete(subscriber.subscription, key)
 	return listener.Stop()
+}
+
+func (subscriber Subscriber) UnsubscribeAllByEvent(event Event) error {
+	var err error
+	err = nil
+	for key, subscription := range subscriber.subscription {
+		if subscription.Event == event {
+			subErr := subscriber.unsubscribe(key)
+			if subErr != nil {
+				err = subErr
+			}
+
+		}
+	}
+
+	return err
 }
 
 func (subscriber Subscriber) UnsubscribeAll() error {
 	var err error
 	err = nil
-	for key := range subscriber.listeners {
-		subErr := subscriber.Unsubscribe(key)
+	for key := range subscriber.subscription {
+		subErr := subscriber.unsubscribe(key)
 		if subErr != nil {
 			err = subErr
 		}
