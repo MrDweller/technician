@@ -132,15 +132,15 @@ func (technician *Technician) Subscribe(requestedService string) error {
 
 	for _, provider := range providers {
 		fmt.Fprintf(technician.output, "\n\t[*] Subscribing to %s events on %s at %s:%d.\n", requestedService, provider.Provider.SystemName, provider.Provider.Address, provider.Provider.Port)
-		go func() {
+		go func(systemName string, address string, port int, serviceDefinition string, metadata map[string]string) {
 			err := technician.Subscriber.Subscribe(
-				provider.Provider.SystemName,
-				provider.Provider.Address,
-				provider.Provider.Port,
+				systemName,
+				address,
+				port,
 				event.Event{
-					Name: requestedService,
+					Name: serviceDefinition,
 				},
-				provider.Metadata,
+				metadata,
 				technician.eventChannel,
 			)
 
@@ -149,7 +149,7 @@ func (technician *Technician) Subscribe(requestedService string) error {
 				return
 			}
 
-		}()
+		}(provider.Provider.SystemName, provider.Provider.Address, provider.Provider.Port, requestedService, provider.Metadata)
 
 	}
 
