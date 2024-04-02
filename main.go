@@ -33,8 +33,8 @@ func main() {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
 
-	address := os.Getenv("ADDRESS")
-	port, err := strconv.Atoi(os.Getenv("PORT"))
+	domainaddress := os.Getenv("DOMAIN_ADDRESS")
+	domainPort, err := strconv.Atoi(os.Getenv("DOMAIN_PORT"))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -47,7 +47,7 @@ func main() {
 	}
 
 	var output io.Writer = os.Stdout
-	technician, err := technician.NewTechnician(address, port, systemName, serviceRegistryAddress, serviceRegistryPort, output)
+	technician, err := technician.NewTechnician(domainaddress, domainPort, systemName, serviceRegistryAddress, serviceRegistryPort, output)
 	if err != nil {
 		log.Panic(err)
 	}

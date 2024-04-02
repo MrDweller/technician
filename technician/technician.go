@@ -27,10 +27,10 @@ type Technician struct {
 	output       io.Writer
 }
 
-func NewTechnician(address string, port int, systemName string, serviceRegistryAddress string, serviceRegistryPort int, output io.Writer) (*Technician, error) {
+func NewTechnician(domainAddress string, domainPort int, systemName string, serviceRegistryAddress string, serviceRegistryPort int, output io.Writer) (*Technician, error) {
 	systemDefinition := models.SystemDefinition{
-		Address:    address,
-		Port:       port,
+		Address:    domainAddress,
+		Port:       domainPort,
 		SystemName: systemName,
 	}
 
