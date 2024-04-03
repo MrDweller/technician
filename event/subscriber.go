@@ -15,29 +15,29 @@ func NewSubscriber() *Subscriber {
 	}
 }
 
-func (subscriber *Subscriber) Subscribe(systemName string, address string, port int, event Event, metadata map[string]string, output chan<- []byte) error {
+func (subscriber *Subscriber) Subscribe(systemName string, address string, port int, event EventDefinition, metadata map[string]string, output chan<- []byte) error {
 	listener := NewRabbitmqListener(address, port, event, metadata)
 	subscription := Subscription{
-		SystemName: systemName,
-		Address:    address,
-		Port:       port,
-		Event:      event,
-		Listener:   listener,
+		SystemName:      systemName,
+		Address:         address,
+		Port:            port,
+		EventDefinition: event,
+		Listener:        listener,
 	}
 	_, exists := subscriber.subscription[subscription.SubscriptionKey()]
 	if exists {
-		return fmt.Errorf("already subscribed to %s event", event.Name)
+		return fmt.Errorf("already subscribed to %s event", event.EventType)
 	}
 	subscriber.subscription[subscription.SubscriptionKey()] = subscription
 	return subscriber.subscription[subscription.SubscriptionKey()].Listen(output)
 }
 
-func (subscriber *Subscriber) Unsubscribe(systemName string, address string, port int, event Event) error {
+func (subscriber *Subscriber) Unsubscribe(systemName string, address string, port int, event EventDefinition) error {
 	subscription := Subscription{
-		SystemName: systemName,
-		Address:    address,
-		Port:       port,
-		Event:      event,
+		SystemName:      systemName,
+		Address:         address,
+		Port:            port,
+		EventDefinition: event,
 	}
 	err := subscriber.unsubscribe(subscription.SubscriptionKey())
 	if err != nil {
@@ -55,11 +55,11 @@ func (subscriber *Subscriber) unsubscribe(key SubscriptionKey) error {
 	return listener.Stop()
 }
 
-func (subscriber Subscriber) UnsubscribeAllByEvent(event Event) error {
+func (subscriber Subscriber) UnsubscribeAllByEvent(event EventDefinition) error {
 	var err error
 	err = nil
 	for key, subscription := range subscriber.subscription {
-		if subscription.Event == event {
+		if subscription.EventDefinition == event {
 			subErr := subscriber.unsubscribe(key)
 			if subErr != nil {
 				err = subErr

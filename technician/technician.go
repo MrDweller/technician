@@ -1,24 +1,23 @@
 package technician
 
 import (
-	"crypto/tls"
-	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
-	"time"
 
 	orchestratormodels "github.com/MrDweller/orchestrator-connection/models"
 	"github.com/MrDweller/orchestrator-connection/orchestrator"
 	"github.com/MrDweller/service-registry-connection/models"
 	"github.com/MrDweller/technician/event"
+	"github.com/MrDweller/technician/eventhandling"
 
 	serviceregistry "github.com/MrDweller/service-registry-connection/service-registry"
 )
 
 type Technician struct {
+	eventhandling.EventHandlingSystem
 	models.SystemDefinition
 	ServiceRegistryConnection serviceregistry.ServiceRegistryConnection
 	OrchestrationConnection   orchestrator.OrchestratorConnection
@@ -27,7 +26,7 @@ type Technician struct {
 	output       io.Writer
 }
 
-func NewTechnician(domainAddress string, domainPort int, systemName string, serviceRegistryAddress string, serviceRegistryPort int, output io.Writer) (*Technician, error) {
+func NewTechnician(domainAddress string, domainPort int, systemName string, serviceRegistryAddress string, serviceRegistryPort int, eventHandlingSystemType eventhandling.EventHandlingSystemType, output io.Writer) (*Technician, error) {
 	systemDefinition := models.SystemDefinition{
 		Address:    domainAddress,
 		Port:       domainPort,
@@ -67,14 +66,31 @@ func NewTechnician(domainAddress string, domainPort int, systemName string, serv
 		return nil, err
 	}
 
-	return &Technician{
+	technician := &Technician{
 		SystemDefinition:          systemDefinition,
 		ServiceRegistryConnection: serviceRegistryConnection,
 		OrchestrationConnection:   orchestrationConnection,
 		Subscriber:                event.NewSubscriber(),
 		eventChannel:              make(chan []byte),
+		EventHandlingSystem:       nil,
 		output:                    output,
-	}, nil
+	}
+	eventHandlingSystem, err := NewEventHandlingSystem(
+		eventhandling.EventHandlingSystemType(eventHandlingSystemType),
+		technician,
+		orchestratormodels.CertificateInfo{
+			CertFilePath: os.Getenv("CERT_FILE_PATH"),
+			KeyFilePath:  os.Getenv("KEY_FILE_PATH"),
+			Truststore:   os.Getenv("TRUSTSTORE_FILE_PATH"),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	technician.EventHandlingSystem = eventHandlingSystem
+
+	return technician, nil
 }
 
 func (technician *Technician) StartTechnician() error {
@@ -83,8 +99,19 @@ func (technician *Technician) StartTechnician() error {
 		return err
 	}
 
-	for event := range technician.eventChannel {
+	for receivedEvent := range technician.eventChannel {
+		var event event.Event
+		if err := json.Unmarshal(receivedEvent, &event); err != nil {
+			fmt.Fprintf(technician.output, "\n\t[!] Error received event with unkown structure: %s\n", receivedEvent)
+			continue
+		}
+
 		fmt.Fprintf(technician.output, "\n\t[x] Received %s.\n", event)
+		err := technician.EventHandlingSystem.HandleEvent(event)
+		if err != nil {
+			fmt.Fprintf(technician.output, "\n\t[!] Error during handling of the event: %s\n", err)
+
+		}
 	}
 
 	return nil
@@ -137,8 +164,8 @@ func (technician *Technician) Subscribe(requestedService string) error {
 				systemName,
 				address,
 				port,
-				event.Event{
-					Name: serviceDefinition,
+				event.EventDefinition{
+					EventType: serviceDefinition,
 				},
 				metadata,
 				technician.eventChannel,
@@ -159,8 +186,8 @@ func (technician *Technician) Subscribe(requestedService string) error {
 
 func (technician *Technician) Unsubscribe(requestedService string) error {
 	err := technician.Subscriber.UnsubscribeAllByEvent(
-		event.Event{
-			Name: requestedService,
+		event.EventDefinition{
+			EventType: requestedService,
 		},
 	)
 	if err != nil {
@@ -168,36 +195,4 @@ func (technician *Technician) Unsubscribe(requestedService string) error {
 	}
 	fmt.Fprintf(technician.output, "\n\t[*] Unsubscribing from %s events.\n", requestedService)
 	return nil
-}
-
-func (technician *Technician) getClient() (*http.Client, error) {
-	cert, err := tls.LoadX509KeyPair(os.Getenv("CERT_FILE_PATH"), os.Getenv("KEY_FILE_PATH"))
-	if err != nil {
-		return nil, err
-	}
-
-	// Load truststore.p12
-	truststoreData, err := os.ReadFile(os.Getenv("TRUSTSTORE_FILE_PATH"))
-	if err != nil {
-		return nil, err
-
-	}
-
-	// Extract the root certificate(s) from the truststore
-	pool := x509.NewCertPool()
-	if ok := pool.AppendCertsFromPEM(truststoreData); !ok {
-		return nil, err
-	}
-
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				Certificates:       []tls.Certificate{cert},
-				RootCAs:            pool,
-				InsecureSkipVerify: false,
-			},
-		},
-	}
-	return client, nil
 }

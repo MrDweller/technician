@@ -1,5 +1,11 @@
 package event
 
+type EventDefinition struct {
+	EventType string `json:"eventType"`
+}
+
 type Event struct {
-	Name string
+	EventDefinition
+	WorkId    string `json:"workId"`
+	ProductId string `json:"productId"`
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/MrDweller/technician/cli"
+	"github.com/MrDweller/technician/eventhandling"
 	"github.com/MrDweller/technician/technician"
 )
 
@@ -46,8 +47,10 @@ func main() {
 		log.Panic(err)
 	}
 
+	eventHandlingSystemType := os.Getenv("EVENT_HANDLING_SYSTEM_TYPE")
+
 	var output io.Writer = os.Stdout
-	technician, err := technician.NewTechnician(domainaddress, domainPort, systemName, serviceRegistryAddress, serviceRegistryPort, output)
+	technician, err := technician.NewTechnician(domainaddress, domainPort, systemName, serviceRegistryAddress, serviceRegistryPort, eventhandling.EventHandlingSystemType(eventHandlingSystemType), output)
 	if err != nil {
 		log.Panic(err)
 	}

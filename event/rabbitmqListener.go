@@ -11,13 +11,13 @@ const EXCHANGE = "exchange"
 type RabbitmqListener struct {
 	address  string
 	port     int
-	event    Event
+	event    EventDefinition
 	metadata map[string]string
 
 	done chan bool
 }
 
-func NewRabbitmqListener(address string, port int, event Event, metadata map[string]string) *RabbitmqListener {
+func NewRabbitmqListener(address string, port int, event EventDefinition, metadata map[string]string) *RabbitmqListener {
 	done := make(chan bool)
 	return &RabbitmqListener{
 		address:  address,

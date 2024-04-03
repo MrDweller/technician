@@ -6,12 +6,12 @@ type Subscription struct {
 	SystemName string
 	Address    string
 	Port       int
-	Event
+	EventDefinition
 	Listener
 }
 
 type SubscriptionKey string
 
 func (subscription Subscription) SubscriptionKey() SubscriptionKey {
-	return SubscriptionKey(fmt.Sprintf("%s-%s-%d-%s", subscription.SystemName, subscription.Address, subscription.Port, subscription.Event.Name))
+	return SubscriptionKey(fmt.Sprintf("%s-%s-%d-%s", subscription.SystemName, subscription.Address, subscription.Port, subscription.EventDefinition.EventType))
 }
