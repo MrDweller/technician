@@ -15,6 +15,8 @@ import (
 	"github.com/MrDweller/orchestrator-connection/orchestrator"
 )
 
+const EXTERNAL_WORK_HANDLER WorkHandlerType = "EXTERNAL_WORK_HANDLER"
+
 type ExternalWorkHandler struct {
 	TakeWorkServiceDefinition string
 	OrchestrationConnection   orchestrator.OrchestratorConnection
@@ -22,11 +24,12 @@ type ExternalWorkHandler struct {
 	CertificateInfo           orchestratormodels.CertificateInfo
 }
 
-func (w *ExternalWorkHandler) AssignWorker(workId string, workerId string) error {
+func (w *ExternalWorkHandler) AssignWorker(workId string, workerId string) (*Work, error) {
 	orchestrationResponse, err := w.OrchestrationConnection.Orchestration(
 		w.TakeWorkServiceDefinition,
 		[]string{
 			"HTTP-SECURE-JSON",
+			"HTTP-INSECURE-JSON",
 		},
 		orchestratormodels.SystemDefinition{
 			Address:    w.SystemDefinition.Address,
@@ -40,13 +43,13 @@ func (w *ExternalWorkHandler) AssignWorker(workId string, workerId string) error
 		},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	providers := orchestrationResponse.Response
 
 	if len(providers) <= 0 {
-		return fmt.Errorf("found no providers for service: %s", w.TakeWorkServiceDefinition)
+		return nil, fmt.Errorf("found no providers for service: %s", w.TakeWorkServiceDefinition)
 	}
 
 	provider := providers[0]
@@ -56,34 +59,43 @@ func (w *ExternalWorkHandler) AssignWorker(workId string, workerId string) error
 		WorkerId: workerId,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://%s:%d%s", provider.Provider.Address, provider.Provider.Port, provider.ServiceUri), bytes.NewBuffer(payload))
+	var req *http.Request
+	req, err = http.NewRequest("POST", fmt.Sprintf("https://%s:%d%s", provider.Provider.Address, provider.Provider.Port, provider.ServiceUri), bytes.NewBuffer(payload))
 	if err != nil {
-		return err
+		req, err = http.NewRequest("POST", fmt.Sprintf("http://%s:%d%s", provider.Provider.Address, provider.Provider.Port, provider.ServiceUri), bytes.NewBuffer(payload))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	client, err := w.getClient()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	response, err := client.Do(req)
 
 	if err != nil {
-		return fmt.Errorf("error during assignment of worker: %s", err)
+		return nil, fmt.Errorf("error during assignment of worker: %s", err)
 	}
 
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
 	if response.StatusCode != 200 {
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("error during assignment of worker: %s", string(body))
+		return nil, fmt.Errorf("error during assignment of worker: %s", string(body))
 	}
 
-	return nil
+	var work *Work
+	err = json.Unmarshal(body, work)
+	if err != nil {
+		return nil, err
+	}
+	return work, nil
 }
 
 func (w *ExternalWorkHandler) getClient() (*http.Client, error) {

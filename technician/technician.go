@@ -12,6 +12,7 @@ import (
 	"github.com/MrDweller/service-registry-connection/models"
 	"github.com/MrDweller/technician/event"
 	"github.com/MrDweller/technician/eventhandling"
+	"github.com/MrDweller/technician/workhandler"
 
 	serviceregistry "github.com/MrDweller/service-registry-connection/service-registry"
 )
@@ -26,7 +27,7 @@ type Technician struct {
 	output       io.Writer
 }
 
-func NewTechnician(domainAddress string, domainPort int, systemName string, serviceRegistryAddress string, serviceRegistryPort int, eventHandlingSystemType eventhandling.EventHandlingSystemType, output io.Writer) (*Technician, error) {
+func NewTechnician(domainAddress string, domainPort int, systemName string, serviceRegistryAddress string, serviceRegistryPort int, eventHandlingSystemType eventhandling.EventHandlingSystemType, workHandlerType workhandler.WorkHandlerType, output io.Writer) (*Technician, error) {
 	systemDefinition := models.SystemDefinition{
 		Address:    domainAddress,
 		Port:       domainPort,
@@ -77,6 +78,7 @@ func NewTechnician(domainAddress string, domainPort int, systemName string, serv
 	}
 	eventHandlingSystem, err := NewEventHandlingSystem(
 		eventhandling.EventHandlingSystemType(eventHandlingSystemType),
+		workHandlerType,
 		technician,
 		orchestratormodels.CertificateInfo{
 			CertFilePath: os.Getenv("CERT_FILE_PATH"),

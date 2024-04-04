@@ -12,6 +12,7 @@ import (
 	"github.com/MrDweller/technician/cli"
 	"github.com/MrDweller/technician/eventhandling"
 	"github.com/MrDweller/technician/technician"
+	"github.com/MrDweller/technician/workhandler"
 )
 
 type EventData struct {
@@ -48,9 +49,19 @@ func main() {
 	}
 
 	eventHandlingSystemType := os.Getenv("EVENT_HANDLING_SYSTEM_TYPE")
+	workHandlerType := os.Getenv("WORK_HANDLER_TYPE")
 
 	var output io.Writer = os.Stdout
-	technician, err := technician.NewTechnician(domainaddress, domainPort, systemName, serviceRegistryAddress, serviceRegistryPort, eventhandling.EventHandlingSystemType(eventHandlingSystemType), output)
+	technician, err := technician.NewTechnician(
+		domainaddress,
+		domainPort,
+		systemName,
+		serviceRegistryAddress,
+		serviceRegistryPort,
+		eventhandling.EventHandlingSystemType(eventHandlingSystemType),
+		workhandler.WorkHandlerType(workHandlerType),
+		output,
+	)
 	if err != nil {
 		log.Panic(err)
 	}

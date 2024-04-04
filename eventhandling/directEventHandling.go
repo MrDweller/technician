@@ -9,9 +9,10 @@ const DIRECT_EVENT_HANDLING EventHandlingSystemType = "DIRECT_EVENT_HANDLING"
 
 type DirectEventHandling struct {
 	WorkerId string
-	workhandler.ExternalWorkHandler
+	workhandler.WorkHandler
 }
 
 func (d *DirectEventHandling) HandleEvent(event event.Event) error {
-	return d.AssignWorker(event.WorkId, d.WorkerId)
+	_, err := d.AssignWorker(event.WorkId, d.WorkerId)
+	return err
 }
