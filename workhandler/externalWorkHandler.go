@@ -65,7 +65,6 @@ func (w *ExternalWorkHandler) AssignWorker(workId string, workerId string) (*Wor
 	var req *http.Request
 	req, err = http.NewRequest("POST", fmt.Sprintf("https://%s:%d%s", provider.Provider.Address, provider.Provider.Port, provider.ServiceUri), bytes.NewBuffer(payload))
 	if err != nil {
-		req, err = http.NewRequest("POST", fmt.Sprintf("http://%s:%d%s", provider.Provider.Address, provider.Provider.Port, provider.ServiceUri), bytes.NewBuffer(payload))
 		if err != nil {
 			return nil, err
 		}
@@ -76,10 +75,18 @@ func (w *ExternalWorkHandler) AssignWorker(workId string, workerId string) (*Wor
 		return nil, err
 	}
 
-	response, err := client.Do(req)
+	var response *http.Response
+	response, err = client.Do(req)
 
 	if err != nil {
-		return nil, fmt.Errorf("error during assignment of worker: %s", err)
+		req, err = http.NewRequest("POST", fmt.Sprintf("http://%s:%d%s", provider.Provider.Address, provider.Provider.Port, provider.ServiceUri), bytes.NewBuffer(payload))
+		if err != nil {
+			return nil, err
+		}
+		response, err = client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("error during assignment of worker: %s", err)
+		}
 	}
 
 	body, err := io.ReadAll(response.Body)
