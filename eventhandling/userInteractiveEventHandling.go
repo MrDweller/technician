@@ -32,11 +32,12 @@ type UserInteractiveEventHandling struct {
 
 func (e *UserInteractiveEventHandling) InitEventHandler() error {
 	router := gin.Default()
-
-	router.GET("/work/take", e.takeWork)
+	router.POST("/work/take", e.takeWork)
+	url := fmt.Sprintf("%s:%d", e.Address, e.Port)
+	log.Printf("Starting event handling api on url: %s\n", url)
 
 	go func() {
-		err := router.Run(fmt.Sprintf("%s:%d", e.Address, e.Port))
+		err := router.Run(url)
 		log.Printf("something wrong when running the event handling api: %s\n", err)
 
 		time.Sleep(time.Second * 10)

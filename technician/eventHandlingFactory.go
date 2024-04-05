@@ -21,6 +21,7 @@ func NewEventHandlingSystem(eventHandlingSystemType eventhandling.EventHandlingS
 			WorkerId:    technician.SystemName,
 			WorkHandler: workHandler,
 		}
+		eventHandlingSystem.InitEventHandler()
 		return eventHandlingSystem, nil
 	case eventhandling.USER_INTERACTIVE_EVENT_HANDLING:
 		eventHandlingSystem := &eventhandling.UserInteractiveEventHandling{
@@ -35,6 +36,7 @@ func NewEventHandlingSystem(eventHandlingSystemType eventhandling.EventHandlingS
 
 			ExternalEndpointUrl: os.Getenv("EXTERNAL_ENDPOINT_URL"),
 		}
+		eventHandlingSystem.InitEventHandler()
 		return eventHandlingSystem, nil
 	default:
 		return nil, fmt.Errorf("no implementation for the event handling system: %s", eventHandlingSystemType)
