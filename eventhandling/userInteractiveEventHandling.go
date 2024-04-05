@@ -73,7 +73,7 @@ func (e *UserInteractiveEventHandling) HandleEvent(event event.Event) error {
 func (e *UserInteractiveEventHandling) takeWork(c *gin.Context) {
 	var takeWorkDTO TakeWorkDTO
 	if err := c.BindJSON(&takeWorkDTO); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.Error(err)
 		return
 	}
 	_, err := e.AssignWorker(takeWorkDTO.WorkId, e.WorkerId)

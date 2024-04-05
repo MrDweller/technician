@@ -14,7 +14,7 @@ func NewWorkHandler(workHandlerType workhandler.WorkHandlerType, technician *Tec
 			TakeWorkServiceDefinition: "assign-worker",
 			OrchestrationConnection:   technician.OrchestrationConnection,
 			SystemDefinition: orchestratormodels.SystemDefinition{
-				Address:    technician.SystemAddress,
+				Address:    technician.Address,
 				Port:       technician.Port,
 				SystemName: technician.SystemName,
 			},
