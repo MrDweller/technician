@@ -65,9 +65,8 @@ func (w *ExternalWorkHandler) AssignWorker(workId string, workerId string) (*Wor
 	var req *http.Request
 	req, err = http.NewRequest("POST", fmt.Sprintf("https://%s:%d%s", provider.Provider.Address, provider.Provider.Port, provider.ServiceUri), bytes.NewBuffer(payload))
 	if err != nil {
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
+
 	}
 
 	client, err := w.getClient()
