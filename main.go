@@ -35,12 +35,18 @@ func main() {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
 
-	domainaddress := os.Getenv("DOMAIN_ADDRESS")
+	domainAddress := os.Getenv("DOMAIN_ADDRESS")
 	domainPort, err := strconv.Atoi(os.Getenv("DOMAIN_PORT"))
 	if err != nil {
 		log.Panic(err)
 	}
 	systemName := os.Getenv("SYSTEM_NAME")
+
+	address := os.Getenv("ADDRESS")
+	port, err := strconv.Atoi(os.Getenv("PORT"))
+	if err != nil {
+		log.Panic(err)
+	}
 
 	serviceRegistryAddress := os.Getenv("SERVICE_REGISTRY_ADDRESS")
 	serviceRegistryPort, err := strconv.Atoi(os.Getenv("SERVICE_REGISTRY_PORT"))
@@ -53,7 +59,9 @@ func main() {
 
 	var output io.Writer = os.Stdout
 	technician, err := technician.NewTechnician(
-		domainaddress,
+		address,
+		port,
+		domainAddress,
 		domainPort,
 		systemName,
 		serviceRegistryAddress,

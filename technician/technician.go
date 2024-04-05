@@ -25,9 +25,12 @@ type Technician struct {
 	*event.Subscriber
 	eventChannel chan []byte
 	output       io.Writer
+
+	SystemAddress string
+	SystemPort    int
 }
 
-func NewTechnician(domainAddress string, domainPort int, systemName string, serviceRegistryAddress string, serviceRegistryPort int, eventHandlingSystemType eventhandling.EventHandlingSystemType, workHandlerType workhandler.WorkHandlerType, output io.Writer) (*Technician, error) {
+func NewTechnician(address string, port int, domainAddress string, domainPort int, systemName string, serviceRegistryAddress string, serviceRegistryPort int, eventHandlingSystemType eventhandling.EventHandlingSystemType, workHandlerType workhandler.WorkHandlerType, output io.Writer) (*Technician, error) {
 	systemDefinition := models.SystemDefinition{
 		Address:    domainAddress,
 		Port:       domainPort,
@@ -75,6 +78,9 @@ func NewTechnician(domainAddress string, domainPort int, systemName string, serv
 		eventChannel:              make(chan []byte),
 		EventHandlingSystem:       nil,
 		output:                    output,
+
+		SystemAddress: address,
+		SystemPort:    port,
 	}
 	eventHandlingSystem, err := NewEventHandlingSystem(
 		eventhandling.EventHandlingSystemType(eventHandlingSystemType),

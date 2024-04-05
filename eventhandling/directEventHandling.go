@@ -12,7 +12,11 @@ type DirectEventHandling struct {
 	workhandler.WorkHandler
 }
 
-func (d *DirectEventHandling) HandleEvent(event event.Event) error {
-	_, err := d.AssignWorker(event.WorkId, d.WorkerId)
+func (e *DirectEventHandling) InitEventHandler() error {
+	return nil
+}
+
+func (e *DirectEventHandling) HandleEvent(event event.Event) error {
+	_, err := e.AssignWorker(event.WorkId, e.WorkerId)
 	return err
 }
