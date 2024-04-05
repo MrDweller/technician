@@ -53,7 +53,7 @@ func (e *UserInteractiveEventHandling) HandleEvent(event event.Event) error {
 		TecnicianSystemSlug: e.WorkerId,
 		MowerSystemSlug:     event.ProductId,
 		WorkTaskId:          event.WorkId,
-		TakeWorkUrl:         fmt.Sprintf("%s:%d/work/take", e.DomainAddress, e.DomainPort),
+		TakeWorkUrl:         fmt.Sprintf("http://%s:%d/work/take", e.DomainAddress, e.DomainPort),
 	}
 
 	rawBody, _ := json.Marshal(notifyExternalEndpointOfWorkTaskDTO)
