@@ -30,6 +30,9 @@ func NewEventHandlingSystem(eventHandlingSystemType eventhandling.EventHandlingS
 			Address: technician.SystemAddress,
 			Port:    technician.SystemPort,
 
+			DomainAddress: technician.Address,
+			DomainPort:    technician.Port,
+
 			ExternalEndpointUrl: os.Getenv("EXTERNAL_ENDPOINT_URL"),
 		}
 		return eventHandlingSystem, nil
