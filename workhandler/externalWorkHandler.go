@@ -96,12 +96,12 @@ func (w *ExternalWorkHandler) AssignWorker(workId string, workerId string) (*Wor
 		return nil, fmt.Errorf("error during assignment of worker: %s", string(body))
 	}
 
-	var work *Work
-	err = json.Unmarshal(body, work)
+	var work Work
+	err = json.Unmarshal(body, &work)
 	if err != nil {
 		return nil, err
 	}
-	return work, nil
+	return &work, nil
 }
 
 func (w *ExternalWorkHandler) getClient() (*http.Client, error) {
