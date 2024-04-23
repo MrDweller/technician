@@ -78,6 +78,7 @@ func (e *UserInteractiveEventHandling) takeWork(c *gin.Context) {
 	}
 	_, err := e.AssignWorker(takeWorkDTO.WorkId, e.WorkerId)
 	if err != nil {
+		log.Printf("Error during assignment of worker: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
