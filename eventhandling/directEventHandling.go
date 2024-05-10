@@ -1,7 +1,6 @@
 package eventhandling
 
 import (
-	"github.com/MrDweller/technician/event"
 	"github.com/MrDweller/technician/workhandler"
 )
 
@@ -16,7 +15,7 @@ func (e *DirectEventHandling) InitEventHandler() error {
 	return nil
 }
 
-func (e *DirectEventHandling) HandleEvent(event event.Event) error {
+func (e *DirectEventHandling) HandleEvent(event WorkEvent) error {
 	_, err := e.AssignWorker(event.WorkId, e.WorkerId)
 	return err
 }

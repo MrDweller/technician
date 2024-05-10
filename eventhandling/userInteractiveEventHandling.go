@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/MrDweller/technician/event"
 	"github.com/MrDweller/technician/workhandler"
 	"github.com/gin-gonic/gin"
 )
@@ -47,7 +46,7 @@ func (e *UserInteractiveEventHandling) InitEventHandler() error {
 	return nil
 }
 
-func (e *UserInteractiveEventHandling) HandleEvent(event event.Event) error {
+func (e *UserInteractiveEventHandling) HandleEvent(event WorkEvent) error {
 	notifyExternalEndpointOfWorkTaskDTO := NotifyExternalEndpointOfWorkTaskDTO{
 		WorkTaskType:        event.EventType,
 		TecnicianSystemSlug: e.WorkerId,

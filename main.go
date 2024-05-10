@@ -74,12 +74,12 @@ func main() {
 		log.Panic(err)
 	}
 
-	go func() {
-		err := technician.StartTechnician()
-		if err != nil {
-			log.Panic(err)
-		}
-	}()
+	// go func() {
+	// 	err := technician.StartTechnician()
+	// 	if err != nil {
+	// 		log.Panic(err)
+	// 	}
+	// }()
 
 	cli.StartCli(technician, output)
 }
